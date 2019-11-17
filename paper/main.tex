@@ -1,0 +1,35 @@
+
+\documentclass{article}
+%\documentclass[twocolumn,10pt]{article}
+
+\usepackage[fencedCode,citations,definitionLists,hashEnumerators,smartEllipses,pipeTables,tableCaptions,hybrid]{markdown}
+
+% Add packages here:
+
+\usepackage[T1]{fontenc}
+\usepackage{natbib}
+\setcitestyle{notesep={; },round,aysep={},yysep={;}}
+\bibliographystyle{plainnat}
+
+\title{Synthesizing Semaphores for Concurrent Code using a Solver-aided DSL}
+\author{Harlan Kringen and Zachary Sisco}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+	Abra-ka-dabstract!
+\end{abstract}
+
+\markdownInput{intro.md}
+\markdownInput{background.md}
+\markdownInput{methodology.md}
+\markdownInput{evaluation.md}
+\markdownInput{conclusion.md}
+
+\bibliography{library.bib}
+
+\end{document}
+
