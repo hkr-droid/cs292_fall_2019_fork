@@ -39,6 +39,7 @@
 (struct :=  (left right) #:transparent) ; assignment
 (struct :   (c1 c2)      #:transparent) ; sequence commands
 (struct ite (e c1 c2)    #:transparent) ; if then else
+(struct loop (e c)       #:transparent) ; loop command c on expression e
 ;(struct load (g v) #:transparent)      ; load a global variable into a local variable value
 ;(struct store (v g) #:transparent)     ; store a global variable with a local variable value
 
@@ -49,6 +50,10 @@
     [(:= v e)          (hash-set env v (aeval e env))]
     [(: c1 c2)         (interpret c2 (interpret c1 env))]
     [(ite e c1 c2)     (if (beval e env) (interpret c1 env) (interpret c2 env))]
+    [(loop e c)        (let looper ([loop-env env])
+                            (if (beval e loop-env)
+                                (looper (interpret c loop-env))
+                                (interpret (skip) loop-env)))]
     ;[(load g v)      env]
     ;[(store v g)     env]
 ))
@@ -57,7 +62,7 @@
 (define (env-empty)  (hash))
 
 ; example program
-(define com1 (: (:= 'a 5) (:= 'b exp1)))
+(define com1 (: (:= 'a 5) (:= 'b (sub (add 7 4) 'a))))
 
 ; runs the following program:
 ;   a := 5
@@ -101,6 +106,15 @@
                      (ite (bnot (ble 'a 'b)) (:= 'a (add 'a 1)) (:= 'b (add 'b 1))))))
 (printf "Test 4 false branch:~n a := 5 ; b := 50 ; if !(a <= b) then a := a + 1 else b := b + 1 ~n")
 (interpret com4false (env-empty))
+(printf "~n")
+
+(define com5 (: (:= 'a 5)
+             (: (:= 'b 50)
+             (: (loop (ble 'a 'b) (:= 'a (add 'a 1)))
+                (:= 'a (sub 'a 1))))))
+(printf "Test 5 loop:~n a := 5 ; b := 50 ; while a <= b do a := (a + 1) end ; a := a - 1 ~n")
+(interpret com5 (env-empty))
+(printf "~n")
 
 ; to do: add rosette symbolics
 ;(define-symbolic c x y integer?)
