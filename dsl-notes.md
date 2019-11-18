@@ -3,7 +3,7 @@ Okay, so here's a few notes on a simplified version of our DSL.
 Here's the grammar:
 
 ```
-Artihmetic expression  e ::= e + e | e * e | v | n 
+Artihmetic expression  e ::= e + e | e * e | e - e | v | n 
 Boolean expression     b ::= #t | #f | e = e | e <= e | ~b | b /\ b
 Command                c ::= v := e | c : c | if b then c else c 
                          | while b do c end | load g v | store v g | lock | unlock
