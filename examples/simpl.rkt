@@ -43,7 +43,7 @@
 ;(struct load (g v) #:transparent)      ; load a global variable into a local variable value
 ;(struct store (v g) #:transparent)     ; store a global variable with a local variable value
 
-; interpret commands (returns resulting environment)
+					; interpret commands (returns resulting environment)
 (define (interpret com env)
   (match com
     [(skip)            env]
