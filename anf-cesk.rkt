@@ -64,6 +64,7 @@
 ; prim? : symbol? -> boolean?
 (define (prim? exp)
   (println "prim")
+  (println exp)
   (case exp
     [(+ - * = void) #t]
     [else      #f]))
@@ -179,6 +180,7 @@
     ; apply a continuation:
     [`(cont ,κ*)
      (println "there")
+     (println args)
      (apply-kont κ* (car args) σ)]))
   
 ; step : state -> (state + answer)
@@ -334,7 +336,8 @@
 
 ;; ;; main
 (define prog
-  `((λ (n) n) λ (y) y))
+  `(((λ (x) λ (y) (x)) 1) 2)
+  )
 
 (run prog)
   

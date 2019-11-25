@@ -28,8 +28,21 @@
   d ; return value
   )
 
-; todo
-; numeric wrapper type for naturals?
+
+;; we need lambdas and closures
+(struct term (Var v) (Lam str term) (App term term))
+
+;; we need states
+(struct state (c e k))
+
+;; we need a step function that builds states
+
+(define (step state)
+  (match s
+    [a b]
+    
+  
+
 (define (interpret p st)
   (match p
     [(id x)	  (hash-ref st x)]
