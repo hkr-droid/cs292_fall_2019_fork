@@ -1,228 +1,218 @@
+
 #lang racket
+(require racket/match racket/struct)
 
-(require racket/match)
+;; env is a map of maps
+;; given a tag, look up the map for that store 
+;; (e.g. 'thread1, 'global, 'semaphore);; then return the value for the given key
 
-; This is the Scheme-subset interpreter written by Matt Might
-;; Evaluation toggles between eval and apply.
+(define (lookup-env env store key)
+  (hash-ref (hash-ref env store) key))
 
+;; given an environment, store, key, value, 
+;; look up the map for the given tag, 
+;; and set val for the given key
+(define (set-env env store key val)
+  (hash-set env store
+            (hash-set (hash-ref env store) key val)))
 
-;; todo need these 
-(struct W
-  | const n
-  | closure
-  )
-(struct state   (c e k))
-(struct closure (f e))
-(struct EvalArg (m e))  ;; currently evaluating e1, next to evaluate e2
-(struct Call (m e))     ;; evaluated e1 to \x.t and are working on e2, next call
+;; syntax
+(struct add (e1 e2) #:transparent)
+(struct sub (e1 e2) #:transparent)
+(struct mul (e1 e2) #:transparent)
 
+(struct ¬ (b) #:transparent)
+(struct ∧ (b1 b2) #:transparent)
+(struct =? (e1 e2) #:transparent)
+(struct ≤ (e1 e2) #:transparent)
+
+(struct skip () #:transparent)
+(struct := (left right) #:transparent)
+(struct : (c1 c2) #:transparent)
+(struct ite (b c1 c2) #:transparent)
+(struct while (b c) #:transparent)
+(struct load (g x) #:transparent)
+(struct store (x g) #:transparent)
+
+(struct 止 () #:transparent)  ;; as in 止まれ (tomare), halt
+(struct par (c0 c1) #:transparent)
+
+(struct EvalArg (c e s k) #:transparent)
+(struct clos (c e) #:transparent)
+
+;; state struct with "pretty" printing
+(struct state (c e s k)
+  #:transparent
+  #:methods gen:custom-write
+  [(define write-proc
+     (make-constructor-style-printer
+      (lambda (obj) 'state)
+      (lambda (obj) (list (state-c obj) (state-e obj) (state-s obj) (state-k obj)))))])
+
+;; step function
 (define (step s)
   (match s
-    [((list-ref ?number? c) e k)                      (state c e (cons ?number? k))]
-    [((list-ref ?boolean? c) e k)                     (state c e (cons ?boolean? k))]
-    [(?symbol? e k)	                              (state (env-lookup ?symbol? e) e k)]  ;; todo ensure lookup works
-    [(`(lambda ,vs ,e) e k)	                      (state (closure lambda ,vs ,e) e k)]  ;; todo whats w/ the commas
-    [((app m0 m1) e k)                                (state m0 e (cons (EvalArg m1 e) k))]
 
-    ;; todo how to treat W?
-    [(W e (list-ref (EvalArg m e) k))                 (state m e (cons (Call W) k))]
-    [(W e (cons (closure lambda ,m ,e2) k))           (state m (env-extend e2 W) k)]
+    ;; values
+    [(state (list-rest (? number? n) c) e s k)            (state c e s (cons n k))]
+    [(state (list-rest (? boolean? b) c) e s k)           (state c e s (cons b k))]
 
-    ;; todo arithmetic operations
-    [((list-ref (add n1 n2) c) e k)                   (state (cons n1 (cons n2 (cons add c))) e k)]
-    x[((list-ref add c) e (list-ref n1 n2 k))          (state c e (cons (+ n1 n2)))]
+    ;; arithmetic operations
+    [(state (list-rest (add E1 E2) c) e s k)              (state (cons E1 (cons E2 (cons '+ c))) e s k)]
+    [(state (list-rest (sub E1 E2) c) e s k)              (state (cons E1 (cons E2 (cons '- c))) e s k)]
+    [(state (list-rest (mul E1 E2) c) e s k)              (state (cons E1 (cons E2 (cons '* c))) e s k)]
     
-    ;; todo boolean operations
+    [(state (list-rest '+ c) e s (cons n2 (cons n1 k)))   (state c e s (cons (+ n1 n2) k))]
+    [(state (list-rest '- c) e s (cons n2 (cons n1 k)))   (state c e s (cons (- n1 n2) k))]
+    [(state (list-rest '* c) e s (cons n2 (cons n1 k)))   (state c e s (cons (* n1 n2) k))]   
+
+    ;; boolean operations
+    [(state (list-rest (¬ B) c) e s k)                    (state (cons B (cons '¬ c)) e s k)]
+    [(state (list-rest (∧ B1 B2) c) e s k)                (state (cons B1 (cons B2 (cons '∧ c))) e s k)]
+    [(state (list-rest '¬ c) e s (cons b k))              (state c e s (cons (not b) k))]
+    [(state (list-rest '∧ c) e s (cons b2 (cons b1 k)))   (state c e s (cons (and b1 b2) k))]
+    [(state (list-rest (=? E1 E2) c) e s k)               (state (cons E1 (cons E2 (cons '=? c))) e s k)]
+    [(state (list-rest (≤ E1 E2) c) e s k)                (state (cons E1 (cons E2 (cons '≤ c))) e s k)]
     
-    [((list-ref skip c) e k)                          (state c e k)
-    [((list-ref (ite b c0 c1) c) e k)                 (state (cons b (cons ite c)) e (cons c0 (cons c1 k)))]
-    [((list-ref ite c) e (list-ref #t c0 c1 k) )    (state c0 e k)]
-    [((list-ref ite c) e (list-ref #f c0 c1 k) )   (state c1 e k)]
-    [((list-ref follows c0 c1 c) e k)	              (state (cons c0 (cons c1 c)) e k)]
-    ;; todo [(assign ,v ,e)	          (env-set! env v e)]
-    ;; todo while
-    ))
+    [(state (list-rest '=? c) e s (cons n2 (cons n1 k)))  (state c e s (cons (= n1 n2) k))]
+    [(state (list-rest '≤ c) e s (cons n2 (cons n1 k)))   (state c e s (cons (<= n1 n2) k))]
+
+    ;; commands
+    [(state (list-rest (skip) c) e s k)                   (state c e s k)]
+
+    ;; sequence commands C1 ; C2
+    [(state (list-rest (: C1 C2) c) e s k)                (state (cons C1 (cons C2 c)) e s k)]
+
+    ;; assign, x := E
+    [(state (list-rest (:= x E) c) e s k)                 (state (cons E (cons ':= c)) e s (cons x k))]
+    [(state (list-rest ':= c) e s (cons n (cons x k)))    (state c (set-env e s x n) s k)]
+    ;;[(state (list-rest ':= c) e s (cons n (cons x k)))    (display "made it here\n") (state (clos c e) (set-env e s x n) s k)]
+
+    ;; if B then C1 else C2
+    [(state (list-rest (ite B C1 C2) c) e s k)                       (state (cons B (cons 'ite c)) e s (cons C1 (cons C2 k)))]
+    [(state (list-rest 'ite c) e s (cons #t (cons C1 (cons C2 k))))  (state (cons C1 c) e s k)]
+    [(state (list-rest 'ite c) e s (cons #f (cons C1 (cons C2 k))))  (state (cons C2 c) e s k)]
+
+    ;; while B do C
+    [(state (list-rest (while B C) c) e s k)                         (state (cons B (cons 'while c)) e s (cons B (cons C k)))]
+    [(state (list-rest 'while c) e s (cons #t (cons B (cons C k))))  (state (cons C (cons (while B C) c)) e s k)]
+    [(state (list-rest 'while c) e s (cons #f (cons B (cons C k))))  (state c e s k)]    
+
+    ;; load / store (global data)
+    [(state (list-rest (load g x) c) e s k)               (state (cons g (cons 'load c)) e 'global (cons x k))]
+    [(state (list-rest 'load c) e s (cons n (cons x k)))  (state c (set-env e s x n) s k)]
+    [(state (list-rest (store x g) c) e s k)              (state (cons x (cons 'store c)) e s (cons g k))]
+    [(state (list-rest 'store c) e s (cons n (cons g k))) (state c (set-env e 'global g n) s k)]
+
+    ;; parallel operator
+    ;; choose a command randomly, left or right, to execute as the control 
+    ;; string, then store the rest of the command as a continuation
+    [(state (list-rest (par c0 c1) c) e s k)                            (let* ([target (list-ref (list c0 c1) (random 2))]
+                                                                               [other (car (remove target (list c0 c1)))]
+                                                                               [hole (gensym "hole")])
+                                                                          (state (list target) e s
+                                                                                 (EvalArg (cons (par hole other) c) e s k))
+                                                                          )]
+
+    ;; another "indirection": one, single evaluation step of a command returns
+    ;; a closure, we wait for that, then check if we need to pop a continuation
+    [(state '() e1 s1 (EvalArg (list-rest (par hole c2)  c) e2 s2 k))       (state (list c2) e1 s1 k)]
+    [(state c e1 s (list-rest (EvalArg (par hole c2) e2 s k1) k2))          (state (par c c2) e1 s k2)]
+    
+    ;; atomic region
+    ;; < (atomic (list c0 c1) . c) e s k > --> < (c0 . atomic c1 . c) e s k
 
 
-; eval dispatches on the type of expression:
-(define (eval exp env)
-  (match exp
-    [(?symbol? e k)	          (env-lookup env exp)]
-    [(?number?)              exp]
-    [(?boolean?)             exp]
-    [`(if ,ec ,et ,ef)       (if (eval ec env) (eval et env) (eval ef env))]
-    [`(letrec ,binds ,eb)	  (eval-letrec binds eb env)]
-    [`(let ,binds ,eb)	  (eval-let binds eb env)]
-    [`(lambda ,vs ,e)	  `(closure ,exp ,env)]
-    [`(set! ,v ,e)	          (env-set! env v e)]
-    [`(begin ,e1 ,e2)	  (begin (eval e1 env) (eval e2 env))]
-    [`(,f . ,args)	          (apply-proc (eval f env) (map (eval-with env) args))]
-    ))
+    ;; look up symbol x in e(s(x))
+    [(state (list-rest (? symbol? x) c) e s k)            (state c e s (cons (lookup-env e s x) k))]
 
-; a handy wrapper for Currying eval:
-(define (eval-with env)
-  (lambda (exp)
-    (eval exp env)))
+    ;; special halt terminal
+    [(state (list-rest (止) _) e s k)                     (state '() e s k)] 
 
-; eval for letrec:
-(define (eval-letrec bindings body env)
-  (let* ((vars (map car bindings))
-	 (exps (map cadr bindings))
-	 (fs (map (lambda _ #f)
-		  bindings))
-	 (env* (env-extend* env vars fs))
-	 (vals (map (eval-with env*)
-		    exps)))
-    (env-set!* env* vars vals)
-    (eval body env*)))
+))
 
-; eval for let:
-(define (eval-let bindings body env)
-  (let* ((vars (map car bindings))
-	 (exps (map cadr bindings))
-	 (vals (map (eval-with env)
-		    exps))
-	 (env* (env-extend* env vars vals)))
-    (eval body env*)))
+(define (run s)
+  (begin
+    (display s)
+    (display "\n-->\n")
+    (let [(next (step s))]
+      (match next
+        [(state (cons (止) _) _ _ (list))  ;; done when state is < 止, e, s, () >
+         (display next)
+         (display "\ndone\n\n")]
+        [else  (run next)]))))
+(define t1-env
+  (hash-set (hash) 't1 (hash)))
 
-; applies a procedure to arguments:
-(define (apply-proc f values)
-  (match f
-	 [`(closure (lambda ,vs ,body)
-		    ,env)
-          ; =>
-	  (eval body
-		(env-extend* env vs values))]
-	 [`(primitive ,p)
-          ; =>
-	  (apply p values)]))
+;; ;; assign test
+;; (run (state (list (: (:= 'a 1) (:= 'b (add 'a 10))) (止)) t1-env 't1 (list)))
+;; ;; ite true branch
+;; (run (state (list 
+;;                   (: (:= 'a 2)
+;;                   (: (ite (=? 'a 2)
+;;                           (: (:= 'a (add 'a 1))
+;;                              (:= 'a (add 'a 1)))
+;;                           (:= 'b 2))
+;;                       (止))))
+;;                    t1-env 't1 (list)))
 
-;; Environments map variables to mutable cells 
-;; containing values.
+;; ;; ite false branch
+;; (run (state (list 
+;;                   (: (:= 'a 3)
+;;                   (: (ite (=? 'a 2)
+;;                           (: (:= 'a (add 'a 1))
+;;                              (:= 'a (add 'a 1)))
+;;                           (:= 'b 2))
+;;                       (止))))
+;;                    t1-env 't1 (list)))
 
-(define-struct cell
-  ([value #:mutable]))
+;; while test (commented out cause print output is long)
 
-; empty environment:
-(define (env-empty)
-  (hash))
+;(run (state (list
+;             (: (:= 'a 5)
+;             (: (:= 'b 50)
+;             (: (while (≤ 'a 'b)
+;                       (: (:= 'a (add 'a 1))
+;                          (:= 'b (sub 'b 1))))
+;                (止)))))
+;            t1-env 't1 (list)))
 
-; initial environment, with bindings for primitives:
-(define (env-initial)
-  (env-extend* (env-empty)
-	       '(+ - / * <= void display newline)
-	       (map (lambda (s)
-		      (list 'primitive s))
-		    `(,+ ,- ,/ ,* ,<= ,void ,display ,newline))))
+(define global-env
+  (hash-set (hash-set (hash) 'A 5) 'B 50))
 
-; looks up a value:
-(define (env-lookup env var)
-  (cell-value (hash-ref env var)))
+(define test-env
+  (hash-set (hash-set (hash) 't1 (hash)) 'global global-env))
 
-; sets a value in an environment:
-(define (env-set! env var value)
-  (set-cell-value! (hash-ref env var)
-		   value))
+;; possible answers are 1, 4, 5
+(run (state (list
+             (:
+              (par
+               (:
+                (:= 'a 2)
+                (止))
+               (:
+                (:= 'a 1)
+                (止))
+               )
+              (止))
+             )
+            test-env 't1 (list)))
 
-; extends an environment with several bindings:
-(define (env-extend* env vars values)
-  (match `(,vars ,values)
-	 [`((,v . ,vars)
-	    (,val . ,values))
-          ; =>
-	  (env-extend* (hash-set env
-				 v
-				 (make-cell val))
-		       vars
-		       values)]
-	 [`(()
-	    ())
-          ; =>
-	  env]))
+;; (run (state (list
+;;              (:
+;;               (:= 'a 2)
+;;               (止)))
+;;             test-env 't1 (list)))
 
-; mutates an environment with several assignments:
-(define (env-set!* env vars values)
-  (match `(,vars ,values)
-	 [`((,v . ,vars)
-	    (,val . ,values))
-          ; =>
-	  (begin (env-set! env v val)
-		 (env-set!* env vars values))]
-	 [`(()
-	    ())
-          ; =>
-	  (void)]))
+;; ;; load/store test
+;; (run (state (list
+;;              (: (load 'A 'a)
+;;                 (: (:= 'a (add 'a 1))
+;;                    (: (store 'a 'A)
+;;                       (止)
+;;                       )
+;;                    )
+;;                 )
+;;              )
+;;             test-env 't1 (list)))
 
-;; Evaluation tests.
-; define new syntax to make tests look prettier:
-(define-syntax test-eval
-  (syntax-rules (====)
-		[(_ program ==== value)
-		 (let ((result (eval (quote program)
-				     (env-initial))))
-		   (when (not (equal? program value))
-		     (error "test failed!")))]))
-
-(test-eval ((lambda (x)
-	      (+ 3 4)) 20)
-	   ====
-	   7)
-
-(test-eval (letrec ((f (lambda (n)
-			 (if (<= n 1)
-			     1
-			   (* n
-			      (f (- n 1)))))))
-	     (f 5))
-	   ====
-	   120)
-
-(test-eval (let ((x 100))
-	     (begin (set! x 20)
-		    x))
-	   ====
-	   20)
-
-(test-eval (let ((x 1000))
-	     (begin (let ((x 10))
-		      20)
-		    x))
-	   ====
-	   1000)
-
-;; Programs are translated into a single letrec expression.
-(define (define->binding define)
-  (match define
-	 [`(define (,f . ,formals)
-	     ,body)
-          ; =>
-
-	  `(,f
-	    (lambda ,formals ,body))]
-	 [`(define ,v ,value)
-          ; =>
-
-	  `(,v ,value)]
-	 [else
-          ; =>
-	  `(,(gensym)
-	    ,define)]))
-
-(define (transform-top-level defines)
-  `(letrec ,(map define->binding defines)
-     (void)))
-
-(define (eval-program program)
-  (eval (transform-top-level program)
-	(env-initial)))
-
-(define (read-all)
-  (let ((next (read)))
-    (if (eof-object? next)
-	'()
-      (cons next (read-all)))))
-
-; read in a program, and evaluate:
-(eval-program (read-all))
-;(eval-program `((lambda (x) (+ 3 4)) 20))
-; (define a 5) (define b 50) (let ([x a] [y b]) (begin (set! a (+ x y)) a))
