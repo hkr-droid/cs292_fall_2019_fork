@@ -1,6 +1,7 @@
 #lang racket
 
 (require racket/match racket/struct)
+(require rosette/lib/angelic)
 
 ;; env is a map of maps
 ;; given a tag, look up the map for that store 
@@ -46,8 +47,8 @@
       (lambda (obj) (list (state-c obj) (state-e obj) (state-s obj) (state-k obj)))))])
 
 ;; step function
-(define (step s)
-  (match s
+(define (step st)
+  (match st
 
     ;; values
     [(state (list-rest (? number? n) c) e s k)            (state c e s (cons n k))]
@@ -96,7 +97,7 @@
     [(state (list-rest 'while c) e s (cons #f (cons B (cons C k))))  (state c e s k)]
     
     ;; load / store (global data)
-    [(state (list-rest (load g x) c) e s k)               (state (cons g (cons 'load c)) e 'global (cons x k))]
+    [(state (list-rest (load g x) c) e s k)               (state (cons (lookup-env e 'global g) (cons 'load c)) e s (cons x k))] ;; cheater!
     [(state (list-rest 'load c) e s (cons n (cons x k)))  (state c (set-env e s x n) s k)]
     [(state (list-rest (store x g) c) e s k)              (state (cons x (cons 'store c)) e s (cons g k))]
     [(state (list-rest 'store c) e s (cons n (cons g k))) (state c (set-env e 'global g n) s k)]
@@ -104,7 +105,9 @@
     ;; look up symbol x in e(s(x))
     [(state (list-rest (? symbol? x) c) e s k)	          (state c e s (cons (lookup-env e s x) k))]
     ;; special halt terminal
-    [(state (list-rest (止) _) e s k)                     (state '() e s k)] 
+    [(state (list-rest (止) _) e s k)                     (state (list) e s k)]
+
+    [else st] ;; problem?
 ))
 
 (define (run s)
@@ -115,34 +118,35 @@
       (match next
         [(state (cons (止) _) _ _ (list))  ;; done when state is < 止, e, s, () >
          (display next)
-         (display "\ndone\n\n")]
+         (display "\ndone\n\n")
+         ]
         [else  (run next)]))))
 
-(define t1-env
-  (hash-set (hash) 't1 (hash)))
+;(define t1-env
+;  (hash-set (hash) 't1 (hash)))
 
 ;; assign test
-(run (state (list (: (:= 'a 1) (:= 'b (add 'a 10))) (止)) t1-env 't1 (list)))
+;(run (state (list (: (:= 'a 1) (:= 'b (add 'a 10))) (止)) t1-env 't1 (list)))
 
 ;; ite true branch
-(run (state (list 
-                  (: (:= 'a 2)
-                  (: (ite (=? 'a 2)
-                          (: (:= 'a (add 'a 1))
-                             (:= 'a (add 'a 1)))
-                          (:= 'b 2))
-                      (止))))
-                   t1-env 't1 (list)))
+;(run (state (list 
+;                  (: (:= 'a 2)
+;                  (: (ite (=? 'a 2)
+;                          (: (:= 'a (add 'a 1))
+;                             (:= 'a (add 'a 1)))
+;                          (:= 'b 2))
+;                      (止))))
+;                   t1-env 't1 (list)))
 
 ;; ite false branch
-(run (state (list 
-                  (: (:= 'a 3)
-                  (: (ite (=? 'a 2)
-                          (: (:= 'a (add 'a 1))
-                             (:= 'a (add 'a 1)))
-                          (:= 'b 2))
-                      (止))))
-                   t1-env 't1 (list)))
+;(run (state (list 
+;                  (: (:= 'a 3)
+;                  (: (ite (=? 'a 2)
+;                          (: (:= 'a (add 'a 1))
+;                             (:= 'a (add 'a 1)))
+;                          (:= 'b 2))
+;                      (止))))
+;                   t1-env 't1 (list)))
 
 ;; while test (commented out cause print output is long)
 ;(run (state (list
@@ -160,9 +164,102 @@
   (hash-set (hash-set (hash) 't1 (hash)) 'global global-env))
 
 ;; load/store test
-(run (state (list
+;(run (state (list
+;             (: (load 'A 'a)
+;             (: (:= 'a (add 'a 1))
+;             (: (store 'a 'A)
+;                (止)))))
+;            test-env 't1 (list)))
+
+
+;; `and` is a special keyword in Scheme, so you can't pass it to things like map or apply
+(require (only-in lazy [and lazy-and]))
+
+(define (all-halt S)
+  (apply lazy-and (hash-map S (lambda (k v) (equal? v (list))))))
+;(apply lazy-and (hash-map S (lambda (k v) (equal? v (list (止)))))))
+
+(define C0 (list
              (: (load 'A 'a)
              (: (:= 'a (add 'a 1))
              (: (store 'a 'A)
-                (止)))))
-            test-env 't1 (list)))
+                (止))))))
+
+(define C1 (list
+             (: (load 'B 'b)
+             (: (:= 'b (add 'b 1))
+             (: (store 'b 'B)
+             (: (load 'A 'a)
+             (: (:= 'a (add 'a 1))
+             (: (store 'a 'A)
+                (止)))))))))
+
+(define test-c (hash-set (hash-set (hash) 0 C0) 1 C1))
+(define test-e
+  (hash-set (hash-set (hash-set (hash) 0 (hash)) 1 (hash)) 'global global-env))
+(define test-k (hash-set (hash-set (hash) 0 (list)) 1 (list)))
+
+(define (parrun c e k)
+  (begin
+    (if (not (all-halt c))
+        (let*
+            ([i (random (hash-count c))]
+             [ci (hash-ref c i)]
+             [ki (hash-ref k i)]
+             [st (state ci e i ki)]
+             [next (step st)])
+          (display next)
+          (display "\n-->\n")
+          (parrun (hash-set c i (state-c next))
+                  (state-e next)
+                  (hash-set k i (state-k next))))
+        (display "done!\n\n"))))
+
+(parrun test-c test-e test-k)
+
+;; redoing tests from before to make sure I didn't break everything
+;; ite false branch
+(parrun (hash-set (hash) 0
+                 (list 
+                  (: (:= 'a 3)
+                  (: (ite (=? 'a 2)
+                          (: (:= 'a (add 'a 1))
+                             (:= 'a (add 'a 1)))
+                          (:= 'b 2))
+                      (止)))))
+        (hash-set (hash) 0 (hash))
+        (hash-set (hash) 0 (list)))
+
+;; ite true branch
+(parrun (hash-set (hash) 0
+                 (list 
+                  (: (:= 'a 2)
+                  (: (ite (=? 'a 2)
+                          (: (:= 'a (add 'a 1))
+                             (:= 'a (add 'a 1)))
+                          (:= 'b 2))
+                      (止))))
+                 )
+        (hash-set (hash) 0 (hash))
+        (hash-set (hash) 0 (list)))
+
+;; assign test
+(parrun (hash-set (hash) 0
+                 (list
+                  (: (:= 'a 1)
+                     (:= 'b (add 'a 10)))
+                     (止))
+                 )
+        (hash-set (hash) 0 (hash))
+        (hash-set (hash) 0 (list)))
+
+;; load/store test
+(parrun (hash-set (hash) 0
+                 (list
+                  (: (load 'A 'a)
+                  (: (:= 'a (add 'a 1))
+                  (: (store 'a 'A)
+                     (止)))))
+                 )
+        (hash-set (hash-set (hash) 0 (hash)) 'global global-env)
+        (hash-set (hash) 0 (list)))
