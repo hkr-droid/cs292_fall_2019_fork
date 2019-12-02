@@ -29,4 +29,11 @@ match: no matching clause for (state (: (:= 'a 1) (止)) '#hash((global . #hash(
    for-loop
    run-module-instance!125
    perform-require!78
-aik@kazimir:~/PersonalProjects/Fall2019/PLLab/cs292_fall_2019/examples$ 
+aik@kazimir:~/PersonalProjects/Fall2019/PLLab/cs292_fall_2019/examples$
+
+
+
+#(struct:EvalArg (#(struct:par hole229 #(struct:: #(struct::= a 2) #(struct::= a #(struct:add a 1)))) #(struct:止))
+                 #hash((global . #hash((A . 5) (B . 50))) (t1 . #hash()))
+                 t1
+                 ())

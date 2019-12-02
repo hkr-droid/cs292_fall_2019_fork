@@ -37,8 +37,9 @@
 (struct 止 () #:transparent)  ;; as in 止まれ (tomare), halt
 (struct par (c0 c1) #:transparent)
 
-(struct EvalArg (c e s k) #:transparent)
+(struct ParKont (k) #:transparent)
 (struct clos (c e) #:transparent)
+(struct atomic (lst) #:transparent) ;; everything in the list to be executed atomically
 
 ;; state struct with "pretty" printing
 (struct state (c e s k)
@@ -54,7 +55,7 @@
   (match s
 
     ;; values
-    [(state (list-rest (? number? n) c) e s k)            (state c e s (cons n k))]
+    [(state (list-rest (? number? n) c) e s k)            (displayln "number 1") (state c e s (cons n k))]
     [(state (list-rest (? boolean? b) c) e s k)           (state c e s (cons b k))]
 
     ;; arithmetic operations
@@ -81,12 +82,16 @@
     [(state (list-rest (skip) c) e s k)                   (state c e s k)]
 
     ;; sequence commands C1 ; C2
-    [(state (list-rest (: C1 C2) c) e s k)                (state (cons C1 (cons C2 c)) e s k)]
+    ;; this should be my swap rule, if I came from a parallel situation, swap C and K
+    [(state (list-rest (: C1 C2) c) e s (ParKont (list-rest (par h a) k)))        (displayln "seq 1 par")
+                                                                                  (state (cons (par (cons C1 (cons C2 c)) a) k) e s (list))]
+    [(state (list-rest (: C1 C2) c) e s k)                                        (displayln "seq 1")
+                                                                                  (state (cons C1 (cons C2 c)) e s k)]
+    
+    ;; assign, x := E 
+    [(state (list-rest (:= x E) c) e s k)                       (displayln "assign 1") (state (cons E (cons ':= c)) e s (cons x k))]
+    [(state (list-rest ':= c) e s (cons n (cons x k)))          (displayln "assign 2") (state c (set-env e s x n) s k)]
 
-    ;; assign, x := E
-    [(state (list-rest (:= x E) c) e s k)                 (state (cons E (cons ':= c)) e s (cons x k))]
-    [(state (list-rest ':= c) e s (cons n (cons x k)))    (state c (set-env e s x n) s k)]
-    ;;[(state (list-rest ':= c) e s (cons n (cons x k)))    (display "made it here\n") (state (clos c e) (set-env e s x n) s k)]
 
     ;; if B then C1 else C2
     [(state (list-rest (ite B C1 C2) c) e s k)                       (state (cons B (cons 'ite c)) e s (cons C1 (cons C2 k)))]
@@ -105,22 +110,26 @@
     [(state (list-rest 'store c) e s (cons n (cons g k))) (state c (set-env e 'global g n) s k)]
 
     ;; parallel operator
-    ;; choose a command randomly, left or right, to execute as the control 
-    ;; string, then store the rest of the command as a continuation
-    [(state (list-rest (par c0 c1) c) e s k)                            (let* ([target (list-ref (list c0 c1) (random 2))]
+    ;; case 1: randomly push 1 of the par args to the control stack, save the remainder as a continuation
+    ;; case 2: command from case 1 runs to completion, pop continuation to control stack
+    ;; case 3: command from case 1 has yet to complete, return to case 1
+    [(state (list-rest (par c0 c1) c) e s k)                            (displayln "par 1")
+                                                                        (let* ([target (list-ref (list c0 c1) (random 2))]
                                                                                [other (car (remove target (list c0 c1)))]
                                                                                [hole (gensym "hole")])
                                                                           (state (list target) e s
-                                                                                 (EvalArg (cons (par hole other) c) e s k))
-                                                                          )]
-
-    ;; another "indirection": one, single evaluation step of a command returns
-    ;; a closure, we wait for that, then check if we need to pop a continuation
-    [(state '() e1 s1 (EvalArg (list-rest (par hole c2)  c) e2 s2 k))       (state (list c2) e1 s1 k)]
-    [(state c e1 s (list-rest (EvalArg (par hole c2) e2 s k1) k2))          (state (par c c2) e1 s k2)]
+                                                                                 (ParKont (cons (par hole other) c))))]
+                                                                                 ;;(EvalArg (cons (par hole other) c) e s k)))]    
+    ;;[(state '() e1 s1 (EvalArg (list-rest (par hole c2)  c) e2 s2 k))   (displayln "case 2") (state (cons c2 c) e1 s1 k)]
+    [(state '() e1 s1 (ParKont (list-rest (par hole c2)  c)))   (displayln "par 2")]; (state (cons c2 c))]
     
-    ;; atomic region
-    ;; < (atomic (list c0 c1) . c) e s k > --> < (c0 . atomic c1 . c) e s k
+    ;; ;; atomic operator
+    ;; ;; case 1: do the first command in the region, store the remainder as a continuation
+    ;; ;; case 2: you have no more commands in the atomic region so you pop the continuation back to the control stack
+    ;; ;; case 3: you have more commands in the atomic region, pop them from the continuation to the control stack
+    ;; [(state (list-rest (atomic (list-rest hd tl)) c) e s k)             (state hd e s (EvalArg (cons (atomic (tl)) c) e s k))]
+    ;; [(state '() e1 s (EvalArg (list-rest (atomic (tl)) c1) e2 s k))     (state (cons (atomic (tl) c1)) e s k)]
+    ;; [(state '() e1 s (EvalArg (list-rest (atomic '()) c1) e2 s k))      (state c1 e2 s k)]
 
 
     ;; look up symbol x in e(s(x))
@@ -187,12 +196,30 @@
 (run (state (list
              (:
               (par
-               (:
-                (:= 'a 2)
-                (止))
+               (atomic
+                (:
+                 (:= 'a 2)
+                 (:= 'a (add 'a 1)))
+                )
                (:
                 (:= 'a 1)
                 (止))
+               )
+              (止))
+             )
+            test-env 't1 (list)))
+
+
+;; possible answers are 1, 4, 5
+(run (state (list
+             (:
+              (par
+               (:
+                (:= 'a 2)
+                (:= 'a (add 'a 1)))
+               (:
+                (:= 'a 1)
+                (:= 'a (add 'a 1)))
                )
               (止))
              )
