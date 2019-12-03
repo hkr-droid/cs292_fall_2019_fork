@@ -298,11 +298,26 @@
 (parrun test-c test-e test-k)
 
 (define A0 (list
-             (: (atomic (list (store 1 'A)))
-                (止))))
+             (: (load 'A 'a)
+             (: (:= 'a (add 'a 1))
+             (: (store 'a 'A)
+             (: (atomic
+                 (list (: (load 'A 'a)
+                       (: (:= 'a (add 'a 1))
+                       (: (store 'a 'A)
+                       (: (load 'B 'b)
+                       (: (:= 'b (add 'b 1))
+                          (store 'b 'B))))))))
+                (止)))))))
 
 (define A1 (list
-             (: (atomic (list (store 2 'A)))
+             (: (atomic
+                 (list (: (load 'A 'a)
+                       (: (:= 'a (add 'a 1))
+                       (: (store 'a 'A)
+                       (: (load 'B 'b)
+                       (: (:= 'b (add 'b 1))
+                          (store 'b 'B))))))))
                 (止))))
 
 (parrun (hash-set (hash-set (hash) 0 A0) 1 A1) test-e test-k)
