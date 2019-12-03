@@ -193,7 +193,8 @@
     (if (not (hash-empty? c))
     ;(if (not (all-halt c))
         (let*
-            ([i (random (hash-count c))]
+            (;[i (random (hash-count c))]  ;; FIX THIS
+             [i (list-ref (hash-keys c) (random (hash-count c)))]
              [ci (hash-ref c i)]
              [ki (hash-ref k i)]
              [st (state ci e i ki)] )
@@ -211,7 +212,7 @@
           
                 (match (car ci)
                   [(atomic ca)
-                   (let atomic-exec ([as (step st)])
+                   (let atomic-exec ([as (step (state ca e i ki))])
                      (display as)
                      (display "\n-->\n")
                      (if (not (empty? (state-c as)))
@@ -297,11 +298,11 @@
 (parrun test-c test-e test-k)
 
 (define A0 (list
-             (: (atomic (store 1 'A))
+             (: (atomic (list (store 1 'A)))
                 (止))))
 
 (define A1 (list
-             (: (atomic (store 2 'A))
+             (: (atomic (list (store 2 'A)))
                 (止))))
 
 (parrun (hash-set (hash-set (hash) 0 A0) 1 A1) test-e test-k)
