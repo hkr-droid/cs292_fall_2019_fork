@@ -1,3 +1,0 @@
-safeTail(Cons(("moo", Nil(unit))))
-;;;
-Some(Nil(unit))

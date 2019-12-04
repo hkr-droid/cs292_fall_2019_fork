@@ -1,5 +1,0 @@
-{ val e = Cons((2, Cons((3, Nil(unit)))))
-  drop(e)(1)
-}
-;;;
-Cons((3, Nil(unit)))
