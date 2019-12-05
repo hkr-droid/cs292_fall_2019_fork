@@ -7,3 +7,4 @@ There are two tasks in @ferles2018 that do not perform well under the synthesize
 
 ## Challenges
 We need to write code to generate semaphores, as well as adapt @ferles2018’s method for generating invariants used in Hoare triples. This will involve understanding and translating the semantics of semaphores into an encoding that a constraint-based solver can understand, which is a non-trivial encoding task. Investigating the semantics of both semaphores and explicit monitors may also tax our knowledge of proving properties such as soundness and completeness.  Most likely we will only be able to synthesize semaphores for a subset of concurrency problems, and so we may have to focus on a single, particular problem, such as Dining Philosophers, as opposed to a more general tool.
+
