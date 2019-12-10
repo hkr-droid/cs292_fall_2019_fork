@@ -1,5 +1,0 @@
-# Conclusion
-
-## Discussion
-
-## Future Work
