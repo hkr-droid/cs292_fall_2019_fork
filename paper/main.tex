@@ -8,11 +8,19 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{natbib}
+\usepackage{listings}
+\lstset{language=C,
+  tabsize=1,
+  basicstyle=\small\ttfamily,
+  breakatwhitespace=false,         
+  breaklines=true,
+  showstringspaces=false
+}
 \setcitestyle{notesep={; },round,aysep={},yysep={;}}
 \bibliographystyle{plainnat}
 
 % Working title, please change
-\title{Towards Reasoning about Concurrent Code for Synthesis of Synchronization Behavior using a Solver-aided DSL}
+\title{Synthesizing Concurrent Code using a Solver-aided DSL}
 \author{Harlan Kringen and Zachary Sisco}
 \date{}
 
@@ -20,12 +28,7 @@
 
 \maketitle
 
-\begin{abstract}
-	Abra-ka-dabstract!
-\end{abstract}
-
 \input{intro.tex}
-\input{background.tex}
 \input{methodology.tex}
 \input{evaluation.tex}
 \input{conclusion.tex}
