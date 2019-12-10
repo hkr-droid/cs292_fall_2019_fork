@@ -1,5 +1,0 @@
-{ val sum = x => y => x + y
- foldRight(Nil(unit))(5)(sum)
-}
-;;;
-5

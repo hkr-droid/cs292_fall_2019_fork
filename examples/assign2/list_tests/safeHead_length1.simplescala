@@ -1,3 +1,0 @@
-safeHead(Cons(("moo", Nil(unit))))
-;;;
-Some("moo")

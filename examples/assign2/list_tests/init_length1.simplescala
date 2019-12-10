@@ -1,3 +1,0 @@
-init(Cons(("moo", Nil(unit))))
-;;;
-Nil(unit)

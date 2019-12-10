@@ -1,0 +1,58 @@
+\section{Methodology}
+
+We will base our generated code on the notes and problems used in the UCSB CS170 Operating Systems class, which focuses on using semaphores for writing multithreaded code.     For the synthesis problem, we will design a DSL that describes the semantics of semaphores for synchronization problems. The DSL will be a subset of the target language that a user can synthesize code for.  With this DSL, and a user-provided specification of the synchronization scheme for the program, we will leverage a program synthesis framework like Neo or Rosette to synthesize the semaphore code.
+
+\begin{table}[!htbp]
+\centering
+\begin{tabular}{ r l r l }
+\emph{Arithmetic Expression} & $e$ & $::=$ & $e + e$ 
+                                         $|$ $e - e$ 
+                                         $|$ $e * e$ 
+                                         $|$ $v$ 
+                                         $|$ $n$ \\
+\emph{Boolean Expression} & $b$ & $::=$ & $\neg$ $b$ 
+                                      $|$ $b \wedge b$ 
+                                      $|$ $e = e$ 
+                                      $|$ $e \leq e$ 
+                                      $|$ true 
+                                      $|$ false \\
+\emph{Command} & $c$ & $::=$ & $v$ $:=$ $e$ 
+                             $|$   load $g$ $v$
+                             $|$   store $v$ $g$ \\ 
+               &     &       $|$ & if $b$ then $c$ else $c$
+                             $|$   while $b$ do $c$ \\
+               &     &       $|$ & $c$ ; $c$
+                             $|$   atomic $c$
+                             $|$   par $c$
+                             $|$   skip 
+                             $|$   halt 
+                               \\
+\emph{Local Variables} & $v$ & $\in$ & $\mathcal{V}$ \\
+\emph{Global Variables} & $g$ & $\in$ & $\mathcal{G}$ \\
+\emph{Integer} & $n$ & $\in$ & $\mathbb{Z}$ \\
+\end{tabular}
+\caption{
+Concurrent Imp DSL grammar. 
+}
+\label{tab:dsl}
+\end{table}
+
+\begin{figure}[!htbp]
+%\begin{empheq}{align*}
+\begin{align*}
+\frac{\langle S_1 , s \rangle \Rightarrow \langle S_1' , s' \rangle}
+	 {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_1' \texttt{ par } S_2, s' \rangle}
+	 \textsc{Par}^1 
+\\
+\\
+\frac{\langle S_1 , s \rangle \Rightarrow s' \rangle}
+     {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_2, s' \rangle}  
+	 \textsc{Par}^2
+\\
+\\
+\end{align*}
+%\end{empheq}
+\caption{Semantics for the concurrent Imp DSL.
+}
+\label{fig:par-rules}
+\end{figure}

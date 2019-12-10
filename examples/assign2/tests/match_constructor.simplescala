@@ -1,6 +1,0 @@
-Some(1) match {
-  case Some(x) => x
-  case None(x) => 2
-}
-;;;
-1

@@ -1,3 +1,0 @@
-map(Nil(unit))(x => x + 1)
-;;;
-Nil(unit)

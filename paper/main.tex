@@ -2,10 +2,10 @@
 \documentclass{article}
 %\documentclass[twocolumn,10pt]{article}
 
-\usepackage[fencedCode,citations,definitionLists,hashEnumerators,smartEllipses,pipeTables,tableCaptions,hybrid]{markdown}
-
 % Add packages here:
-
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{natbib}
 \setcitestyle{notesep={; },round,aysep={},yysep={;}}
@@ -24,13 +24,12 @@
 	Abra-ka-dabstract!
 \end{abstract}
 
-\markdownInput{intro.md}
-\markdownInput{background.md}
-\markdownInput{methodology.md}
-\markdownInput{evaluation.md}
-\markdownInput{conclusion.md}
+\input{intro.tex}
+\input{background.tex}
+\input{methodology.tex}
+\input{evaluation.tex}
+\input{conclusion.tex}
 
-\bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv, library}
+\bibliography{./library.bib}
 
 \end{document}
