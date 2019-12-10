@@ -1,16 +1,97 @@
 \section{Evaluation}
+We evaluate the implementation of \texttt{conimp} on the Listing 1, which is emblematic of a typical race condition.  The evaluation proceeds by employing constructs in the Rosette language to facilitate solver-based queries.  That is, we treat the detection of race conditions as a solver-based query, which Rosette excels at solving.  This illustrates the ability for the dual ability of our interpreter to handle concurrency through the \texttt{par} operator and our language's ability to be instrumented by the Rosette framework.  We conclude by reexamining the race condition example with an eye to real world implementation details.  
 
-We evaluate the implementation of \texttt{conimp} on the canonical race condition example. This illustrates the ability for the interpreter to handle concurrency through the \texttt{par} operator. 
+\subsection{Rosette Integration}
+Rosette takes expressions in the DSL annotated with Rosette constructs for symbolic variables.  The annotated code is then lifted into Rosette's internal language that affords functions for common tasks utilizing SMT solvers.  The three most common are solving, verification, and synthesis.  In the ``solve'' case, the user code has expressions replaced with symbolic variables, and is additionally given an assertion for what the code should do or compute down to. Rosette uses the backend SMT solver to find values for the symbolic variables to evaluate the expressions in a way that satisfies the assertion.  It can be thought of as a simplistic form of synthesis.  For the ``verify'' case, Rosette looks for a way to fill in the symbolic variables to find a counterexample to the user code's assertion. Finally, in the ``synthesis'' case, the user code is additionally given ``holes'' replacing whole expressions along with a specification for behavior.  Rosette employs its solver to find candidate expressions in the DSL for the holes that mantain the specification.  We found Rosette readily capable of solving and verifying expressions.  Unfortunately, we were not able to synthesize program holes with Rosette.
 
-\subsection{confirming our example program}
-- looks good!
-- discussion about differences in end global state, race condition
+\subsection{Solving and Verifying}
+The goal in both solving and verification queries is to have the SMT solver search for values to fill in symbolic variables that satisfy a set of logical formulas.  In our case, the logical formulas are our assertions about the end state of running our program, which in the running example, is just a set of two integer equations.  We assert the state of two integer counters in a global store at the outset of the program, and then at the end of the program, noting that they should have been incremented a certain number of times.  The example puts some increments inside of a locked ``atomic'' region, so there is a sort of race each thread performs in trying to access the global store.  This race can result in the increments outside the atomic region being lost, and thus there are multiple possible end states for the program.  We replace the sensitive components in our program with symbolic variables, which come from the Rosette language, so that we can define our logical formulas in the assertion about the program's end state.  The program along with its assertion is then passed to a simple Rosette function that employs its solver backend to answer the query.  An example of the solve query is presented in Listing 3.
 
-\subsection{Rosette}
-- solve
-	- symbolic values, where we can put 'em 
-- verify
-	- counter example
-- synthesize :( 
-	- this what we tried and what we want
+\begin{lstlisting}[caption={Setup and Test Environment.},captionpos=b,frame=single]
+(define test-k (hash-set (hash-set (hash) 0 (list)) 1 (list)))
+(define global-senv
+(hash-set (hash-set (hash) 'A 5) 'B 50))
 
+(define-symbolic x y integer?)
+
+(define test-se
+  (hash-set (hash-set (hash-set (hash) 0 (hash)) 1 (hash)) 'global global-senv))
+
+(evaluate (list x y)
+          (solve
+            (assert (let ([g (hash-ref (parrun (hash-set (hash-set (hash) 0 A0) 1 A1) test-se test-k) 'global)])
+                      (and (or (= (hash-ref g 'A) 7) (= (hash-ref g 'A) 8))
+                           (= (hash-ref g 'B) 52))))))
+\end{lstlisting}
+
+Our program state consists of integer variables in a global hash table, and we generate two symbolic integers.  The Rosette ``evaluate,'' ``solve,'' and ``assert'' keywords additionally come from Rosette.  The logical assertion about our program behavior follows the ``assert'' keyword.  Running the above over the Listing 1 example, with the increments of 1 replaced by the symbolic x and y variables, results in a list, sure enough, of ``(1 1)'' indicating Rosette found a way to supply values for the variables in a way that made the assertion true.
+
+The code in Listing 3 can be altered slightly for the verification example.  In that case we keep the same symbolic variable replacements, but change the word ``solve'' for ``verify'' and instead make the assertion something untrue.  Again, running the example has Rosette produce a list with assignments for the symbolic variables that prove the assertion false.  We were able in both cases to replace the integer values of the increments, as well as the initial global store values to get the desired behavior.  While the examples demonstrated are somewhat trivial, they form a solid foundation for futture studies in verification.  
+
+\subsection{Synthesis}
+We were able to use Rosette language features, namely symbolic variables, in our own language to make use of the solving, verification, and synthesis capabilities Rosette affords.  Specifically, we were able to replace basic expressions in our language with symbolic variables, along with an assertion about the behavior of the program at its end state, and have Rosette compute values for those symbolic variables to satisfy the assertion.  We were also provided false assertions about the behavior of the program and were able to have Rosette determine appropriate counterexamples.  We did not unfortunately use Rosette to synthesize missing pieces of our test code with the more expressive ``hole'' construct, as opposed to mere symbolic variables.  This we speculate is due to the complicated nature of our DSL.  It is not obvious what the nearest logic for the language should be, and we did not give Rosette any sort of logical specification about how the program was to behave.  This comes for free in a lot of simpler examples where the DSL is essentially a reflection of the logic itself, be it integer linear arithmetic or quantifier-free boolean formulas.  
+
+\subsection{The Example Program Revisited}
+The example in Listing 1 above is based on a similar example written in C for the CS170 class.  The class example is designed to show that there is a data race for the integer assignment in thread 1 that is not locked by the mutex.  Technically, it is possible for thread 1 to being the integer assigment expression, then because it accesses data outside of a mutex, it could be pre-empted, or interrupted, by thread 2, which begins modifying the data inside its own locked region.  Thread 1, when it regains control of the cpu, will begin a logical line down from the initial line and so the integer assignment will be lost.  This suggests at least two possible pathways for the code.  In fact there are 3, with the third following the above logic but for the opposite interruption scheme.
+
+There is a sense then in which Listing 1 is a subtly inexact rendering of Listing 2, stemming from the fact that there is no way for our interpreter to race the threads.  It is only capable of interleaving states.  The code in Listing 2 trades on a more complicated notion of execution where threads have a notion of ownership.  A given thread owns the CPU while it is executing, and by proxy, any global data.  Ownership can be preempted and in this case a thread will abandon a region of code that it was running.  That is to say, there is a wholly separate semantics for thread ownership, or data ownership that we have not programmed into our language.  The concept of data races such as this have been studied, for instance in the Rust programming language \citep{rust2018} where ownership is built into the type system itself.  It is not immediately clear how we could add this to our language without adopting types, nor how we would have our interpreter simulate the race without some sort of a clock signal.  This reinforces the distinction made earlier about implementing specific program behaviors in the object language or in the interpreter.  Nevertheless, both are interesting possible extensions to \texttt{conimp}.  
+
+\begin{lstlisting}[caption={Two threads concurrently updating a global store (C).},captionpos=b,frame=single]
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+
+int A;
+int B;
+
+pthread_mutex_t Lock;
+
+void *
+Thread_1(void *arg)
+{
+	A++;
+	pthread_mutex_lock(&Lock);
+	A++;
+	B++;
+	pthread_mutex_unlock(&Lock);
+
+	pthread_exit(NULL);
+	return(NULL);
+}
+
+void *
+Thread_2(void *arg)
+{
+	pthread_mutex_lock(&Lock);
+	A++;
+	B++;
+	pthread_mutex_unlock(&Lock);
+
+	pthread_exit(NULL);
+	return(NULL);
+}
+
+int main(int argc, char *argv[])
+{
+	pthread_t t1;
+	pthread_t t2;
+	int err;
+
+	pthread_mutex_init(&Lock,NULL);
+	A = 5;
+	B = 50;
+
+	err = pthread_create(&t1, NULL, Thread_1, NULL);
+	err = pthread_create(&t2, NULL, Thread_2, NULL);
+
+	pthread_join(t1, NULL);
+	pthread_join(t2, NULL);
+
+	printf("A: %d, B: %d\n",A,B);
+
+	pthread_exit(NULL);
+
+	return(0);
+}
+\end{lstlisting}

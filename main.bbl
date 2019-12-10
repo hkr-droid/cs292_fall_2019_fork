@@ -1,0 +1,41 @@
+\begin{thebibliography}{5}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[rus()]{rust}
+The rust programming language.
+\newblock
+  \url{https://doc.rust-lang.org/1.30.0/book/2018-edition/ch04-01-what-is-ownership.html}.
+\newblock Accessed: 2019-12-10.
+
+\bibitem[Emerson and Samanta(2011)]{emerson2011}
+E.~Emerson and Roopsha Samanta.
+\newblock An algorithmic framework for synthesis of concurrent programs.
+\newblock pages 522--530, 10 2011.
+\newblock \doi{10.1007/978-3-642-24372-1_41}.
+
+\bibitem[Ferles et~al.(2018)Ferles, Van~Geffen, Dillig, and
+  Smaragdakis]{ferles2018}
+Kostas Ferles, Jacob Van~Geffen, Isil Dillig, and Yannis Smaragdakis.
+\newblock Symbolic reasoning for automatic signal placement.
+\newblock In \emph{Proceedings of the 39th ACM SIGPLAN Conference on
+  Programming Language Design and Implementation}, PLDI 2018, pages 120--134,
+  New York, NY, USA, 2018. ACM.
+\newblock ISBN 978-1-4503-5698-5.
+\newblock \doi{10.1145/3192366.3192395}.
+\newblock URL \url{http://doi.acm.org/10.1145/3192366.3192395}.
+
+\bibitem[Fernandez(2004)]{fernandez2004}
+Maribel Fernandez.
+\newblock \emph{Programming Languages and Operational Semantics}.
+\newblock King's College Publications, London, England, 2004.
+
+\bibitem[Huttel(2010)]{huttel2010}
+Hans Huttel.
+\newblock \emph{Transitions and Trees}.
+\newblock Cambridge University Press, New York, New York, 2010.
+
+\end{thebibliography}

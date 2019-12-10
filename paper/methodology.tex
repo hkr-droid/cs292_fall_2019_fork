@@ -1,8 +1,8 @@
 \section{Methodology}
-In this project we followed the paradigm presented in the first homework assignment which demonstrated Rosette as a solver-aided programming language.  To that end, we designed a DSL (domain-specific language) to simulate features of a concurrent programming language, using as a starting point the toy language Imp \cite{winskel1993}, which we have termed {\em ConImp}. Our main contributions to the language were adding the \texttt{par} and \texttt{atomic} operators which give us the semantic notion of concurrency, and an interpreter which offers a way to simulate a non-deterministic environment.  With these additions, we simulated a form of concurrency by being able to interleave commands at the will of a scheduler built into our interpreter.  We will elaborate on the design of our language by using the following code snippet as an example.  It is based on a midterm question used in the CS170 class.
+In this project we followed the paradigm presented in the first homework assignment which demonstrated Rosette as a solver-aided programming language.  To that end, we designed a DSL (domain-specific language) to simulate features of a concurrent programming language, using as a starting point the toy language Imp \cite{winskel1993}, which we have termed \texttt{conimp}. Our main contributions to the language were adding the \texttt{par} and \texttt{atomic} operators which give us the semantic notion of concurrency, and an interpreter which offers a way to simulate a non-deterministic environment.  With these additions, we simulated a form of concurrency by being able to interleave commands at the will of a scheduler built into our interpreter.  We will elaborate on the design of our language by using the following code snippet as an example.  It is based on a midterm question used in the CS170 class.
 
 \subsection{Imp as a DSL}
-Rosette requires the user to provide a specification language that it can use to lift and convert ultimately into logical SMT formulas.  We chose Imp because it afforded the basic features necessary to test concurrent semantics, namely integer arithmetic and logical sequencing.  There are a number of examples and tutorials using custom DSLs  in the lectures of James Bornholt and Emina Torlak.  These however used fairly simple languages and could not ultimately provide the level of detail we needed to employ Rosette to any degree of utility with our own concurrent language.  We present in Listing 1 a basic example of the features of ConImp.  In the example we create two threads that each increment two global data values, with some of those increments being locked under a so-called "mutex".  The listing serves as a basis for our experimentations with the solver features afforded by Rosette as well.
+Rosette requires the user to provide a specification language that it can use to lift and convert ultimately into logical SMT formulas.  We chose Imp because it afforded the basic features necessary to test concurrent semantics, namely integer arithmetic and logical sequencing.  There are a number of examples and tutorials using custom DSLs  in the lectures of James Bornholt and Emina Torlak.  These however used fairly simple languages and could not ultimately provide the level of detail we needed to employ Rosette to any degree of utility with our own concurrent language.  We present in Listing 1 a basic example of the features of \texttt{conimp}.  In the example we create two threads that each increment two global data values, with some of those increments being locked under a so-called "mutex".  The listing serves as a basis for our experimentations with the solver features afforded by Rosette as well.
 
 \begin{table*}[!htbp]
 \centering
@@ -39,7 +39,7 @@ Concurrent Imp DSL grammar.
 \label{tab:dsl}
 \end{table*}
 
-\begin{lstlisting}[caption={Two threads concurrently updating a global store (ConImp).},captionpos=b,frame=single]
+\begin{lstlisting}[caption={Two threads concurrently updating a global store (\texttt{conimp}).},captionpos=b,frame=single]
 par A0 A1 with G = { A -> 5, B -> 50 }  
 (define A0 (list
       (: (load 'A 'a)
@@ -102,71 +102,3 @@ There is a subtle distinction between providing the semantics for concurrent pro
 }
 \label{fig:par-rules}
 \end{figure}
-
-\subsection{Rosette Integration}
-Rosette takes expressions in the DSL annotated with Rosette constructs for symbolic variables.  The annotated code is then lifted into Rosette's internal language that affords functions for common tasks utilizing SMT solvers.  The three most common are solving, verification, and synthesis.  In the ``solve'' case, the user code has expressions replaced with symbolic variables, and is additionally given an assertion for what the code should do or compute down to. Rosette uses the backend SMT solver to find values for the symbolic variables to evaluate the expressions in a way that satisfies the assertion.  It can be thought of as a simplistic form of synthesis.  For the ``verify'' case, Rosette looks for a way to fill in the symbolic variables to find a counterexample to the user code's assertion. Finally, in the ``synthesis'' case, the user code is additionally given ``holes'' replacing whole expressions along with a specification for behavior.  Rosette employs its solver to find candidate expressions in the DSL for the holes that mantain the specification.  We found Rosette readily capable of solving and verifying expressions.  Unfortunately, we were not able to synthesize program holes with Rosette.
-
-\subsection{The Midterm Example}
-The example in Listing 1 above is based on a similar example written in C for the CS170 class.  The class example is designed to show that there is a data race for the integer assignment in thread 1 that is not locked by the mutex.  Technically, it is possible for thread 1 to being the integer assigment expression, then because it accesses data outside of a mutex, it could be pre-empted, or interrupted, by thread 2, which begins modifying the data inside its own locked region.  Thread 1, when it regains control of the cpu, will begin a logical line down from the initial line and so the integer assignment will be lost.  This suggests at least two possible pathways for the code.  In fact there are 3, with the third following the above logic but for the opposite interruption scheme.
-
-There is a sense then in which Listing 1 is a subtly inexact rendering of Listing 2, stemming from the fact that there is no way for our interpreter to race the threads.  It is only capable of interleaving states.  The code in Listing 2 trades on a more complicated notion of execution where threads have a notion of ownership.  A given thread owns the CPU while it is executing, and by proxy, any global data.  Ownership can be preempted and in this case a thread will abandon a region of code that it was running.  That is to say, there is a wholly separate semantics for thread ownership, or data ownership that we have not programmed into our language.  The concept of data races such as this have been studied, for instance in the Rust programming language \cite{rust} where ownership is built into the type system itself.  It is not immediately clear how we could add this to our language without adopting types, nor how we would have our interpreter simulate the race without some sort of a clock signal.  This reinforces the distinction made earlier about implementing specific program behaviors in the object language or in the interpreter.  Nevertheless, both are interesting possible extensions to ConImp.  
-
-\begin{lstlisting}[caption={Two threads concurrently updating a global store (C).},captionpos=b,frame=single]
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <pthread.h>
-
-int A;
-int B;
-
-pthread_mutex_t Lock;
-
-void *
-Thread_1(void *arg)
-{
-	A++;
-	pthread_mutex_lock(&Lock);
-	A++;
-	B++;
-	pthread_mutex_unlock(&Lock);
-
-	pthread_exit(NULL);
-	return(NULL);
-}
-
-void *
-Thread_2(void *arg)
-{
-	pthread_mutex_lock(&Lock);
-	A++;
-	B++;
-	pthread_mutex_unlock(&Lock);
-
-	pthread_exit(NULL);
-	return(NULL);
-}
-
-int main(int argc, char *argv[])
-{
-	pthread_t t1;
-	pthread_t t2;
-	int err;
-
-	pthread_mutex_init(&Lock,NULL);
-	A = 5;
-	B = 50;
-
-	err = pthread_create(&t1, NULL, Thread_1, NULL);
-	err = pthread_create(&t2, NULL, Thread_2, NULL);
-
-	pthread_join(t1, NULL);
-	pthread_join(t2, NULL);
-
-	printf("A: %d, B: %d\n",A,B);
-
-	pthread_exit(NULL);
-
-	return(0);
-}
-\end{lstlisting}
