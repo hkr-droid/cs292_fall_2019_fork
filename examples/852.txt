@@ -1,0 +1,170 @@
+
+wyatt@wyt:~/Projects/cs292_fall_2019/examples$ racket minilang_small.rkt
+minilang_small.rkt:293:44: C0: unbound identifier in module
+  in: C0
+  context...:
+   /home/wyatt/.racket/6.11/pkgs/rosette/rosette/base/form/module.rkt:16:0
+   standard-module-name-resolver
+wyatt@wyt:~/Projects/cs292_fall_2019/examples$ racket minilang_small.rkt
+#<state: (#(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)) #hash((1 . #hash()) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash()) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (5 load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash()) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (a)>
+-->
+#<state: (load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash()) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (5 a)>
+-->
+#<state: (#(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct:add a 1) := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (a)>
+-->
+#<state: (a 1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (a)>
+-->
+#<state: (1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (5 a)>
+-->
+#<state: (+ := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (1 5 a)>
+-->
+#<state: (:= #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 5))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (6 a)>
+-->
+#<state: (#(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 ()>
+-->
+#<state: (a store #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (A)>
+-->
+#<state: (store #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 5) (B . 50)))) 1 (6 A)>
+-->
+#<state: (#(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 ()>
+-->
+#<state: (50 load #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (b)>
+-->
+#<state: (load #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (50 b)>
+-->
+#<state: (#(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct::= b #(struct:add b 1)) #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 ()>
+-->
+#<state: (#(struct:add b 1) := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (b)>
+-->
+#<state: (b 1 + := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (b)>
+-->
+#<state: (1 + := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (50 b)>
+-->
+#<state: (+ := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (1 50 b)>
+-->
+#<state: (:= #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 50))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (51 b)>
+-->
+#<state: (#(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 ()>
+-->
+#<state: (b store) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (B)>
+-->
+#<state: (store) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 50)))) 1 (51 B)>
+-->
+#<state: () #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 51)))) 1 ()>
+-->
+#<state: () #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 51)))) 1 ()>
+-->
+removing 1
+-->
+#<state: (#(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 51)))) 0 ()>
+-->
+#<state: (6 load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 51)))) 0 (a)>
+-->
+#<state: (load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash()) (global . #hash((A . 6) (B . 51)))) 0 (6 a)>
+-->
+#<state: (#(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:add a 1) := #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 (a)>
+-->
+#<state: (a 1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 (a)>
+-->
+#<state: (1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 (6 a)>
+-->
+#<state: (+ := #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 (1 6 a)>
+-->
+#<state: (:= #(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 6))) (global . #hash((A . 6) (B . 51)))) 0 (7 a)>
+-->
+#<state: (#(struct:: #(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 6) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:store a A) #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 6) (B . 51)))) 0 ()>
+-->
+#<state: (a store #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 6) (B . 51)))) 0 (A)>
+-->
+#<state: (store #(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 6) (B . 51)))) 0 (7 A)>
+-->
+#<state: (#(struct:: #(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:atomic (#(struct:: #(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))))) #(struct:止)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:load A a) #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (7 load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (a)>
+-->
+#<state: (load #(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (7 a)>
+-->
+#<state: (#(struct:: #(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct::= a #(struct:add a 1)) #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:add a 1) := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (a)>
+-->
+#<state: (a 1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (a)>
+-->
+#<state: (1 + := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (7 a)>
+-->
+#<state: (+ := #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (1 7 a)>
+-->
+#<state: (:= #(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 7))) (global . #hash((A . 7) (B . 51)))) 0 (8 a)>
+-->
+#<state: (#(struct:: #(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:store a A) #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 7) (B . 51)))) 0 ()>
+-->
+#<state: (a store #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 7) (B . 51)))) 0 (A)>
+-->
+#<state: (store #(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 7) (B . 51)))) 0 (8 A)>
+-->
+#<state: (#(struct:: #(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B)))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 8) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:load B b) #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 8) (B . 51)))) 0 ()>
+-->
+#<state: (51 load #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 8) (B . 51)))) 0 (b)>
+-->
+#<state: (load #(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8))) (global . #hash((A . 8) (B . 51)))) 0 (51 b)>
+-->
+#<state: (#(struct:: #(struct::= b #(struct:add b 1)) #(struct:store b B))) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct::= b #(struct:add b 1)) #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 ()>
+-->
+#<state: (#(struct:add b 1) := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 (b)>
+-->
+#<state: (b 1 + := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 (b)>
+-->
+#<state: (1 + := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 (51 b)>
+-->
+#<state: (+ := #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 (1 51 b)>
+-->
+#<state: (:= #(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 51))) (global . #hash((A . 8) (B . 51)))) 0 (52 b)>
+-->
+#<state: (#(struct:store b B)) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 51)))) 0 ()>
+-->
+#<state: (b store) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 51)))) 0 (B)>
+-->
+#<state: (store) #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 51)))) 0 (52 B)>
+-->
+#<state: () #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 52)))) 0 ()>
+-->
+#<state: () #hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 52)))) 0 ()>
+-->
+removing 0
+-->
+done!
+
+'#hash((1 . #hash((a . 6) (b . 51))) (0 . #hash((a . 8) (b . 52))) (global . #hash((A . 8) (B . 52))))
+wyatt@wyt:~/Projects/cs292_fall_2019/examples$
