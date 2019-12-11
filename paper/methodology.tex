@@ -1,10 +1,7 @@
 \section{Methodology}
-In this project we followed the paradigm presented in the first homework assignment which demonstrated Rosette as a solver-aided programming language.  To that end, we designed a DSL (domain-specific language) to simulate features of a concurrent programming language, using as a starting point the toy language Imp \citep{winskel1993}, which we have termed \texttt{conimp}. Our main contributions to the language were adding the \texttt{par} and \texttt{atomic} operators which give us the semantic notion of concurrency, and an interpreter which simulates a non-deterministic environment.  With these additions, we imitated a form of concurrency by being able to interleave commands at the will of a scheduler built into our interpreter.  We will elaborate on the design of our language by using the code snippet in as an example.  It is based on a midterm question used in the CS170 class.
+In this project we followed the paradigm presented in this course's first homework assignment, which demonstrated Rosette as a solver-aided programming language.  To that end, we designed a DSL (domain-specific language) to simulate features of a concurrent programming language, using as a starting point the toy language Imp \citep{winskel1993}, which we have termed \texttt{conimp}. We present the grammar for \texttt{conimp} in Table \ref{tab:dsl}. Our main contributions to the language were adding the \texttt{par} and \texttt{atomic} operators which give us the semantic notion of concurrency, and an interpreter which offers a way to simulate a non-deterministic environment.  With these additions, we imitated a form of concurrency by being able to interleave commands at the will of a scheduler built into our interpreter.  We will elaborate on the design of our language by using the following code snippet in \ref{ex-rkt} as an example.  It is based on a midterm question used in the CS170 class.
 
-\subsection{Imp as a DSL}
-Rosette requires the user to provide a specification language that it can use to lift and convert ultimately into logical SMT formulas.  We chose Imp because it afforded the basic features necessary to test concurrent semantics, namely integer arithmetic and logical sequencing.  There are a number of examples and tutorials using custom DSLs  in the lectures of James Bornholt and Emina Torlak.  These however used fairly simple languages and could not ultimately provide the level of detail we needed to employ Rosette to any degree of utility with our own concurrent language.  We present in Listing 1 a basic example of the features of \texttt{conimp}.  In the example we create two threads that each increment two global data values, with some of those increments being locked under a so-called "mutex".  The listing serves as a basis for our experimentations with the solver features afforded by Rosette as well.
-
-\begin{table*}[!htbp]
+\begin{table*}[!h]
 \centering
 \begin{tabular}{ r l r l }
 \emph{Arithmetic Expression} & $e$ & $::=$ & $e + e$ 
@@ -39,7 +36,11 @@ Concurrent Imp DSL grammar.
 \label{tab:dsl}
 \end{table*}
 
-\begin{lstlisting}[caption={Two threads concurrently updating a global store (\texttt{conimp}).},captionpos=b,frame=single]
+\subsection{Imp as a DSL}
+Rosette requires the user to provide a specification language that it can use to lift and convert into logical SMT formulas.  We chose Imp because it afforded the basic features necessary to test concurrent semantics, namely integer arithmetic and logical sequencing.  There are a number of examples and tutorials using custom DSLs  in the lectures of James Bornholt and Emina Torlak.  These however could not provide the level of detail we needed to employ Rosette to any degree of utility with our own concurrent language.  We present in Listing \ref{lst:ex-rkt} a basic example of the features of \texttt{conimp}.  In the example we create two threads that each increment two global data values, with some of those increments being locked under a so-called ``mutex''.  The listing serves as a basis for our experimentations with the solver features afforded by Rosette as well.
+
+\begin{figure}[!h]
+\begin{lstlisting}[label={lst:ex-rkt},caption={Two threads concurrently updating a global store (\texttt{conimp}).},captionpos=b,frame=single,xleftmargin=1em]
 par A0 A1 with G = { A -> 5, B -> 50 }  
 (define A0 (list
       (: (load 'A 'a)
@@ -65,28 +66,28 @@ par A0 A1 with G = { A -> 5, B -> 50 }
       (halt))))
   
 \end{lstlisting}
+\end{figure}
 
 \subsubsection{Big-Step Semantics}
-We first implemented Imp using a big-step style semantics. The big-step style is exemplified by having a simple recursive function evaluate all terms in a given expression until termination \cite{huttel2010}.  Most of the examples we found that defined a DSL to feed into Rosette were similarly given uncomplicated, big-step style semantics.  This can be straightforwardly accomplished by giving the terms of the language as ground functions of integer arity and then pattern matching over them.  The advantages of this approach are its simplicity and ease of setup.  There are disadvantages though in how the evaluation procedure is a monolithic function call.  That is, there was no way to inspect a single step of the evaluation, which is nececssary to do more complicated control-flow procedures.  In practice, any meaningful extension of a toy programming language should must evolve beyond a big-step style, or natural, semantics.
+We first implemented Imp using a big-step style semantics. The big-step style is exemplified by having a simple recursive function evaluate all terms in a given expression until termination \citep{huttel2010}.  Most of the examples we found that defined a DSL to feed into Rosette were given similarly uncomplicated, big-step style semantics.  This can be straightforwardly accomplished by giving the terms of the language as ground functions of integer arity and then pattern matching over them.  The advantages of this approach are its simplicity and ease of setup.  There are disadvantages though in how the evaluation procedure is a monolithic function call.  That is, there was no way to inspect a single step of the evaluation, which is necessary to do more complicated control-flow procedures.  In practice, any meaningful extension of a toy programming language should evolve beyond a big-step style, or natural, semantics.
 
 \subsubsection{Small-Step Semantics}
-To remedy the above shortcomings, we realized we needed to adopt a more granular approach to evaluating expressions \cite{fernandez2004}.  The programming languages community defines an analogue to the big-step style, appropriately termed ``small-step semantics.''  In this protocol, the recursion is modded out and each pattern match, instead of \emph{destructing} a given term, \emph{contructs} a data structure representing the state of the overall evaluation.  A common notion of state used in the literature comes from the notion of an abstract machine \cite{huttel2010}.
+To remedy the above shortcomings, we realized we needed to adopt a more granular approach to evaluating expressions.  The programming languages community defines an analogue to the big-step style, appropriately termed ``small-step semantics'' \citep{fernandez2004}.  In this protocol, the recursion is modded out and each pattern match, instead of \emph{destructing} a given term, \emph{constructs} a data structure representing the state of the overall evaluation.  A common notion of state used in the literature comes from the notion of an \emph{abstract machine} \citep{huttel2010}.
 
-Abstract machines are an approach to operational semantics that centralize the notion of registers, so that temporary evaluations of code, ad future directions of evaluation, are stored in registers as if they were stacks.   The tradition began with Peter Landin's SECD machine and was redesigned by Matthias Fellesen under the CESK moniker, an acronym that stands for (C)ontrol, (E)nvironment, (S)tore, (K)ontinutation.  We adopted the CESK approach to rebuilding our interpreter in the small-step style.
+Abstract machines are an approach to operational semantics that centralize the notion of registers, so that temporary evaluations of code, and future directions of evaluation, are stored in registers as if they were stacks.   The tradition began with Peter Landin's SECD machine and was redesigned by Matthias Fellesen under the CESK moniker, an acronym that stands for (C)ontrol, (E)nvironment, (S)tore, (K)ontinutation.  We adopted the CESK approach to rebuilding our interpreter in the small-step style.
 
-Intuitively, the C stack keeps the expressions currently being evaluated, the E and S stacks keep track of variable assignments, while the K stack maintains partially evaluated code that will be referenced later.  As an example, in the implementation of the while loop function, we can think of the entire while loop expression residing on the C stack.  It can be pattern matched over to split the command into two pieces, a boolean test and the set of possible commands to execute based on the test returning true or false.  We may put the boolean test on the C stack and the rest on the K stack, then proceed to evaluate the boolean test alone.  Based on the result of that test we may pop the K stack to the appropriate command, regarding the alternative option.  It is this interplay between the C and K stack, being able to store references to code with a placeholder value waiting on a future computation, that affords more complicated flow of control.  
+Intuitively, the C stack keeps the expressions currently being evaluated, the E and S stacks keep track of variable assignments, while the K stack maintains partially evaluated code that will be referenced later.  As an example, in the implementation of the while loop function, we can think of the entire while loop expression residing on the C stack.  It can be pattern matched to split the command into two pieces, a boolean test and the set of possible commands to execute based on the test returning true or false.  We may put the boolean test on the C stack and the rest on the K stack, then proceed to evaluate the boolean test alone.  Based on the result of that test we may pop the K stack to the appropriate command.  It is this interplay between the C and K stacks, being able to store references to code with a placeholder value waiting on a future computation, that affords more complicated flow of control.  
 
 \subsubsection{Par and Atomic}
-After reimplementing our language as an abstract CESK machine, we had only really mimicked the functionality that we already had with the big-step semantics.  However, we could implement the \texttt{par} and \texttt{atomic} functions in the above style.
+After reimplementing our language as an abstract CESK machine, we had only really mimicked the functionality that we already had with the big-step semantics.  However, the \texttt{par} and \texttt{atomic} functions became easier to implement.
 
-To some extent, we combined the interpreter and the semantics for the `par` function.  We designed it to randomly choose between a set of commands (implicit threads) and evaluate the command list a single step recursively.  After each step, the interpreter would be back to randomly choosing a command branch.  In this way we could interleave commands at a more granular level and simulate multiple branches of code running in parallel.
+Figure \ref{fig:par-rules} shows the small-step semantics for the \texttt{par} operator. In our implementation, we actually combined the interpreter and the semantics for the \texttt{par} function.  We designed it to randomly choose between a set of commands (implicit threads) and evaluate the command list a single step recursively.  After each step, the interpreter would be back to randomly choosing a command branch.  In this way we could interleave commands at a more granular level and simulate multiple branches of code running in parallel.
 
-There must be a duality with the par function however, which is the user's ability to constrain parallel evaluation, an ability to tell the interpreter that a certain region of code may not be parallelized, or must be run sequentially, in an uninteruptible fashion.  We adopted the operator \texttt{atomic} for this purpose.  The user simply uses the \texttt{atomic} keyword followed by a Racket list of expressions.  If the interpreter sees the atomic keyword it circumvents the parallel choice and continues until the list of expressions have been evaluated.
+There must be a duality with the \texttt{par} function however, which is the user's ability to constrain parallel evaluation, an ability to tell the interpreter that a certain region of code may not be parallelized, or must be run sequentially, in an uninterruptible fashion.  We adopted the operator \texttt{atomic} for this purpose.  The user writes the \texttt{atomic} keyword followed by a Racket list of expressions.  If the interpreter sees the \texttt{atomic} keyword it circumvents the parallel choice and continues until the list of expressions have been evaluated.
 
-There is a subtle distinction between providing the semantics for concurrent programming language and simulating its behavior.  We thus note the difference between the pattern matching rules we provide for our syntax and the interpreter which selects expressions of code to evaluate.  The interpreter implements a simple ``scheduler'' which in our case is a random choice among expressions.  By providing an interpreter ourselves, we gain the ability to run example code sequences.  Without such a function, we would have to manually construct a given ``run'' of the code.
+There is a subtle distinction between providing the semantics for a concurrent programming language and simulating its behavior.  We thus note the difference between the pattern matching rules we provide for our syntax and the interpreter which selects expressions of code to evaluate.  The interpreter implements a simple ``scheduler'' which in our case is a random choice among expressions.  By providing an interpreter ourselves, we gain the ability to run example code sequences.  Without such a function, we would have to manually construct a given ``run'' of the code.
 
-\begin{figure}[!htbp]
-%\begin{empheq}{align*}
+\begin{figure}[!h]
 \begin{align*}
 \frac{\langle S_1 , s \rangle \Rightarrow \langle S_1' , s' \rangle}
 	 {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_1' \texttt{ par } S_2, s' \rangle}
@@ -96,9 +97,18 @@ There is a subtle distinction between providing the semantics for concurrent pro
 \frac{\langle S_1 , s \rangle \Rightarrow s' \rangle}
      {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_2, s' \rangle}  
 	 \textsc{Par}^2
+\\
+\\
+\frac{\langle S_2 , s \rangle \Rightarrow \langle S_2' , s' \rangle}
+	 {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_1 \texttt{ par } S_2', s' \rangle}
+	 \textsc{Par}^3 
+\\
+\\
+\frac{\langle S_2 , s \rangle \Rightarrow s' \rangle}
+     {\langle S_1 \texttt{ par } S_2, s \rangle \Rightarrow \langle S_1, s' \rangle}  
+	 \textsc{Par}^4
 \end{align*}
-%\end{empheq}
-\caption{Semantics for the concurrent Imp DSL.
+\caption{Semantics for the \texttt{par} operator in \texttt{conimp} (adapted from \cite{huttel2010}). For clarity, the rules evaluate over two threads---$S1$ and $S2$---but our implementation generalizes for any number of threads.
 }
 \label{fig:par-rules}
 \end{figure}
