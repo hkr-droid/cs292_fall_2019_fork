@@ -37,7 +37,7 @@ We used Rosette language features, namely symbolic values, in our own language t
 The example in Listing \ref{lst:ex-rkt} above is based on a similar example written in C for the CS170 class (shown in Listing \ref{lst:ex-c}).  The class example is designed to show that there is a data race for the integer assignment in thread 1 that is not locked by the mutex.  Technically, it is possible for thread 1 to begin the integer assignment expression, then because it accesses data outside of a mutex, it could be pre-empted, or interrupted, by thread 2, which begins modifying the data inside its own locked region.  Thread 1, when it regains control of the CPU, will begin a logical line down from the initial line and so the integer assignment will be lost.  This suggests at least two possible pathways for the code.  In fact there are 3, with the third following the above logic but for the opposite interruption scheme.
 
 \begin{figure}
-\begin{lstlisting}[label={lst:ex-c},caption={Two threads concurrently updating a global store (C).},captionpos=b,frame=single]
+\begin{lstlisting}[label={lst:ex-c},caption={Two threads concurrently updating a global store (C).},captionpos=b,frame=single,xrightmargin=1em]
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
